@@ -1,0 +1,23 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+#faceDraw{
+    width: 480px; 
+    height: 480px; 
+    display: flex;
+    flex-wrap: wrap;
+    aspect-ratio: 1/1;
+}
+
+.pixel{
+    /* border: 1px solid black; */
+}
+
+.pixel:hover{
+    transform: scale(.85);
+    border: 2px solid black; 
+    filter :opacity(0.5);
+    transition: transform 0.4s;
+}
