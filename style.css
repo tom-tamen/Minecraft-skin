@@ -11,8 +11,12 @@
     aspect-ratio: 1/1;
 }
 
-.pixel{
-    /* border: 1px solid black; */
+/* .pixel{
+    border: 1px solid black;
+} */
+
+#myCanvas{
+    display: none;
 }
 
 .pixel:hover{
