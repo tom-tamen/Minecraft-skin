@@ -94,9 +94,20 @@ img.onload = function () {
     const canvas3D = document.querySelector('#render3D')
 
     const sizes = {
-        width: 800,
-        height: 600
+        width: window.innerWidth,
+        height: window.innerHeight
     }
+    
+    window.addEventListener('resize', () => {
+        sizes.width = window.innerWidth
+        sizes.height = window.innerHeight
+    
+        camera.aspect = sizes.width / sizes.height
+        camera.updateProjectionMatrix()
+    
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
 
     const scene = new THREE.Scene()
 
@@ -193,9 +204,61 @@ img.onload = function () {
     scene.add(pivot);
 
 
+    const plane = new THREE.PlaneGeometry(sizes.width, sizes.height)
+    const material = new THREE.MeshBasicMaterial({ color: 0x323232 })
+    const planeMesh = new THREE.Mesh(plane, material)
+    planeMesh.position.z = -25
+    scene.add(planeMesh)
+
+    const background = new THREE.Group()
+
+
+    function normalizeValue(x, xMin, xMax) {
+    return (x - xMin) / (xMax - xMin) * 20;
+    }
+
+
+    let oldZ = [];
+    let counterZ = 0;
+    const backgroundCubeSize = 1;
+    const diviser = 10;
+    for (let i = -sizes.width / diviser; i < sizes.width / diviser; i++) {
+        z = normalizeValue(i,0, sizes.width / diviser)
+        if (z < 0) {
+            z = -z
+            oldZ.push(z)
+            counterZ++
+        } else {
+            z = oldZ[counterZ - 1]
+            counterZ--
+        }
+        for (let j = -sizes.height / diviser; j < sizes.height / diviser; j++) {
+
+            const geometry = new THREE.BoxGeometry(backgroundCubeSize, backgroundCubeSize, backgroundCubeSize)
+            const material = new THREE.MeshBasicMaterial({ color: 0x212121 })
+            //const z = 11//Math.random() * (11 - 11.5) + 11.5;
+            const cube = new THREE.Mesh(geometry, material)
+            cube.position.x = i*2
+            cube.position.y = j*2
+            cube.position.z = 11 + z;
+            cube.lookAt(head.position)
+            if (z >= 11.5) cube.userData = { goBack: false, bgCube : true }
+            else cube.userData = { goBack: true, bgCube : true }
+            background.add(cube)
+        }
+    }
+
+    background.position.z = -20
+
+    scene.add(background)
+
     // Renderer
     const renderer = new THREE.WebGLRenderer({
-        canvas: canvas3D
+        canvas: canvas3D,
+        antialias: true,
+        precision: "highp",
+        depthBuffer: true, 
+        depthWrite: true
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.render(scene, camera)
@@ -209,20 +272,21 @@ img.onload = function () {
     let rbgCounter = 0;
     let rbgCounterOld = 0;
     let rgbTimer = setInterval(function () {
-        
+
     }, 100)
 
-    let rgb = {red:{
-        v:Math.floor(Math.random() * 256),
-        reset : false
-    }, green : {
-        v:Math.floor(Math.random() * 256),
-        reset : false
-    }, blue : {
-        v:Math.floor(Math.random() * 256),
-        reset : false
-    }};
-
+    let rgb = {
+        red: {
+            v: Math.floor(Math.random() * 256),
+            reset: false
+        }, green: {
+            v: Math.floor(Math.random() * 256),
+            reset: false
+        }, blue: {
+            v: Math.floor(Math.random() * 256),
+            reset: false
+        }
+    };
     let time = Date.now();
 
     function animate() {
@@ -233,6 +297,8 @@ img.onload = function () {
         time = now;
         pivot.rotation.y += deltaT * 0.001;
 
+
+        planeMesh.color = rgb;
         //head.rotation.x += 0.01;
         //camera.position.x = cursor.x * 10
         //camera.position.y = cursor.y * 10
@@ -249,9 +315,9 @@ img.onload = function () {
         for (let i = 0; i < head.children.length; i++) {
             if (head.children[i].userData.hasHover) {
                 if (head.children[i].scale.x > 0.5) {
-                    head.children[i].scale.x -= 0.01;
-                    head.children[i].scale.y -= 0.01;
-                    head.children[i].scale.z -= 0.01;
+                    head.children[i].scale.x -= 0.06;
+                    head.children[i].scale.y -= 0.06;
+                    head.children[i].scale.z -= 0.06;
                     if (head.children[i].scale.x <= 0.5) {
                         head.children[i].scale.x = 0.5;
                         head.children[i].scale.y = 0.5;
@@ -263,9 +329,9 @@ img.onload = function () {
             }
             if (head.children[i].userData.restore) {
                 if (head.children[i].scale.x < 1) {
-                    head.children[i].scale.x += 0.01;
-                    head.children[i].scale.y += 0.01;
-                    head.children[i].scale.z += 0.01;
+                    head.children[i].scale.x += 0.06;
+                    head.children[i].scale.y += 0.06;
+                    head.children[i].scale.z += 0.06;
                     if (head.children[i].scale.x >= 0.99) {
                         head.children[i].scale.x = 1.001;
                         head.children[i].scale.y = 1.001;
@@ -274,6 +340,19 @@ img.onload = function () {
                     }
                 }
             }
+        }
+
+        for(let i = 0; i < background.children.length; i++) {
+            if(background.children[i].userData.goBack){
+                background.children[i].position.z += 0.0005 * deltaT;
+            }
+            else {
+                background.children[i].position.z -= 0.0005 * deltaT;
+            }
+    
+            if(background.children[i].position.z >= 12) background.children[i].userData.goBack = false;
+            else if(background.children[i].position.z <= 11) background.children[i].userData.goBack = true;
+            //background.children[i].position.z -= 0.01 * deltaT;
         }
     }
 

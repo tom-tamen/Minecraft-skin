@@ -30,10 +30,17 @@
     height: 30px;
     pointer-events: none;
     display: none;
+    z-index: 1;
 }
 
 #custom-cursor img {
     display: block;
     width: 100%;
     height: 100%;
+}
+
+#render3D{
+    position: fixed;
+    top: 0;
+    left: 0;
 }
